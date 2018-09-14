@@ -204,17 +204,21 @@ double rnormdouble(double b, double c)
 
 // [[Rcpp::depends("RcppArmadillo")]]
 // [[Rcpp::export]]
-List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y,
+List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z,
                     double a2, double b2, double A2, double B2)
 {  
-  
   // define some matrices and constants
   arma::mat X_t = X.t(); //the transpose of the design matrix
   int ns = Y.n_rows; //the total number of species
   int J = Y.n_cols; //number of sites
   int nd = V.n_cols; //number of columns in detection covariates
   int no = X.n_cols; //number of columns in occupancy covariates
-
+  
+  NumericVector siteindex(J); //siteindex = 1, 2, ..., J
+  for (int idown =0; idown<J; idown++){siteindex(idown) = idown+1;}
+  
+  //arma::mat siteids,
+  
   int sigma2_alpha_a = (1 + ns*nd)*0.5;
   int sigma2_beta_a = (1 + ns*no)*0.5;
   double inv_A2 = 1.0/A2;
@@ -239,7 +243,7 @@ List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y,
   arma::mat mu_beta = zeros<arma::mat>(no, 1);
   arma::mat beta = zeros<arma::mat>(no, ns);
   
-  arma::mat z;
+  //arma::mat z; import z
   arma::mat omega_alpha;
   arma::mat omega_beta;
   
@@ -249,6 +253,15 @@ List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y,
   
   arma::mat pg_beta;
   arma::mat pg_alpha;
+  arma::mat cov_beta_i;
+  arma::mat cov_alpha_i;
+  arma::mat mu_alpha_i;
+  arma::mat mu_beta_i;
+  arma::mat beta_i;
+  arma::mat alpha_i;
+  
+  uvec z_equals1_rows;//identify all indices with z==1
+  //dimensions of z is number of sites by number of species 
   
   //sampling
   
@@ -283,11 +296,36 @@ List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y,
   //sample mu_beta
   mu_beta = mvnrnd( (b2*tau_beta/(1.0 + ns*b2*tau_beta))*sum(beta, 1), (b2/(1+ns*b2*tau_beta))*I_no , 1);
   
-  //sample pg_beta
+  //sample beta_i
   for (int i_species=0; i_species<ns; i_species++){
     //sample from Polya-gamm variables in turn for each of the species
     pg_beta = rpg5( X*beta.col(i_species) );
-    Rcpp::Rcout << "\n pg_beta= " << pg_beta << std::endl;
+    //Rcpp::Rcout << "\n pg_beta= " << pg_beta << std::endl;
+    
+    cov_beta_i = inv_sympd( tau_beta*I_no + X_t*diagmat( pg_beta )*X ); //arma::mat
+    mu_beta_i =  cov_beta_i*(X_t*( z.col(i_species) - 0.5 ) + tau_beta*mu_beta); // arma::mat
+    
+    //sample of the occupancy regression effect for species i
+    beta_i = mvrnormArma2(1, mu_beta_i, cov_beta_i); //arma::mat
+    
+    //Rcpp::Rcout << "\n mu_beta_i= \n" << mu_beta_i << std::endl;
+  }
+  
+  //sample alpha_i
+  for ( int i_species = 0; i_species <ns; i_species++){
+    
+    z_equals1_rows = find(z.col(i_species)==1);  //row number as specified by c++. if an element say 0 ==> row 0 of z is 1.
+    
+    //convert arma::vec z to NumericVector zNM
+    NumericVector z_NM = wrap(z.col(i_species));
+    NumericVector z_pos = siteindex[z_NM>0]; //find out where z>0
+    //IntegerVector ind_z = match(siteids, z_pos);
+    //arma::vec convert_z_vec= as<arma::vec>(ind_z);
+    //W_iter = W_vb.rows( find(convert_z_vec>0) ) ;
+    //Y_iter = Y.rows( find(convert_z_vec>0) ); //an alternate method of obtaining W_iter and Y_iter
+    Rcpp::Rcout << "\n i_species= \n" << i_species << std::endl;
+    Rcpp::Rcout << "\n z_pos= \n" << z_pos << std::endl;
+    Rcpp::Rcout << "\n ---------- \n" << z_pos << std::endl;
   }
   
   //Rcpp::Rcout << "\n row sum = " << sum(X,0) << std::endl;
