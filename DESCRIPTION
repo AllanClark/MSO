@@ -1,0 +1,16 @@
+Package: MSO
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2018-09-12
+Authors@R: person("Allan", "Clark", email="allan.clark@uct.ac.za",
+  role = c("aut", "cre"))
+Description: The following package allows the user to build various Bayesian multi-
+  species occupancy models. 
+License: What license is it under?
+Imports: 
+  Rcpp (>= 0.12.18)
+LinkingTo: 
+  Rcpp, 
+  RcppArmadillo
+SystemRequirements: GNU make

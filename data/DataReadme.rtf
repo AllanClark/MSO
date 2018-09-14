@@ -1,0 +1,259 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fmodern\fcharset0 CourierNewPSMT;\f1\fmodern\fcharset0 CourierNewPS-BoldMT;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww19140\viewh13480\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 A documentation of what was done to clean data:\
+#==============================================\
+\
+\
+Lets check what species was observed at the two locations: \
+\
+Use \'93occ_data_karoo_fullfile.csv\'94 and run the code listed \'93code1\'94 below to obtain the following outputs. 43 species are observed in total. 35 species at Koup and 36 at Anysberg. Note both includes \'91rodent\'92\
+\
+\
+The names of all of the species observed :\
+\
+colnames(Y)\
+\
+ [1] "Alcelaphus buselaphus caama"   "Antidorcas marsupialis"        "Aonyx capensis"                "Ardeotis kori"                \
+ [5] "Atilax paludinosus"            "Canis mesomelas"               "Caracal caracal"               "Chlorocebus pygerythrus"      \
+ [9] "Cynictis penicillata"          "Dama dama"                     "Damaliscus pygargus phillipsi" "Equus zebra"                  \
+[13] "Eupodotis afra"                "Eupodotis vigorsii"            "Felis sylvestris"              "Galerella pulverulenta"       \
+[17] "Genetta genetta"               "Hyaena brunnea"                "Hystrix africaeaustralis"      "Ictonyx striatus"             \
+[21] "Lepus spp."                    "Mellivora capensis"            "Neotis ludwigii"               "Oreotragus oreotragus"        \
+[25] "Orycteropus afer"              "Oryx gazella"                  "Otocyon megalotis"             "Panthera pardus"              \
+[29] "Papio ursinus"                 "Pelea capreolus"               "Potamochoerus larvatus"        "Procavia capensis"            \
+[33] "Pronolagus rupestris"          "Proteles cristata"             "Pternistes capensis"           "Raphicerus campestris"        \
+[37] "rodent"                        "Scleroptila africanus"         "Suricata suricatta"            "Sylvicapra grimmia"           \
+[41] "Taurotragus oryx"              "Tragelaphus strepsiceros"      "Vulpes chama"  \
+\
+\
+> sum(apply(Y[Koup.Stations,], 2, function(x) sum(max(x)>0)) ) #35 species seen in the Koup\
+[1] 35\
+\
+> colnames(Y)[which( apply(Y[Koup.Stations,], 2, function(x) sum(max(x)>0)) ==1)] #which were seen at Koup\
+\
+ [1] "Alcelaphus buselaphus caama"   "Antidorcas marsupialis"        "Ardeotis kori"                 "Canis mesomelas"              \
+ [5] "Caracal caracal"               "Chlorocebus pygerythrus"       "Cynictis penicillata"          "Dama dama"                    \
+ [9] "Damaliscus pygargus phillipsi" "Eupodotis afra"                "Eupodotis vigorsii"            "Felis sylvestris"             \
+[13] "Galerella pulverulenta"        "Genetta genetta"               "Hystrix africaeaustralis"      "Ictonyx striatus"             \
+[17] "Lepus spp."                    "Neotis ludwigii"               "Oreotragus oreotragus"         "Orycteropus afer"             \
+[21] "Oryx gazella"                  "Otocyon megalotis"             "Papio ursinus"                 "Pelea capreolus"              \
+[25] "Procavia capensis"             "Pronolagus rupestris"          "Proteles cristata"             "Pternistes capensis"          \
+[29] "Raphicerus campestris"         "rodent"                        "Scleroptila africanus"         "Suricata suricatta"           \
+[33] "Sylvicapra grimmia"            "Tragelaphus strepsiceros"      "Vulpes chama"                 \
+\
+\
+> sum(apply(Y[Anysberg.Stations,], 2, function(x) sum(max(x)>0)) ) #36 species seen in the Anysberg\
+[1] 36\
+\
+> colnames(Y)[which( apply(Y[Anysberg.Stations,], 2, function(x) sum(max(x)>0)) ==1)] #which were seen at Anysberg\
+ [1] "Alcelaphus buselaphus caama" "Antidorcas marsupialis"      "Aonyx capensis"              "Atilax paludinosus"         \
+ [5] "Canis mesomelas"             "Caracal caracal"             "Chlorocebus pygerythrus"     "Equus zebra"                \
+ [9] "Eupodotis afra"              "Eupodotis vigorsii"          "Felis sylvestris"            "Galerella pulverulenta"     \
+[13] "Genetta genetta"             "Hyaena brunnea"              "Hystrix africaeaustralis"    "Ictonyx striatus"           \
+[17] "Lepus spp."                  "Mellivora capensis"          "Oreotragus oreotragus"       "Orycteropus afer"           \
+[21] "Oryx gazella"                "Otocyon megalotis"           "Panthera pardus"             "Papio ursinus"              \
+[25] "Pelea capreolus"             "Potamochoerus larvatus"      "Procavia capensis"           "Pronolagus rupestris"       \
+[29] "Proteles cristata"           "Pternistes capensis"         "Raphicerus campestris"       "rodent"                     \
+[33] "Scleroptila africanus"       "Sylvicapra grimmia"          "Taurotragus oryx"            "Tragelaphus strepsiceros" \
+\
+#=============================================================================\
+\
+setwd("~/Documents/AllanClark/Stats/Research/Drouilly_M/Analysis")\
+\
+library(reshape)\
+\
+#Using the original file to determine how many species were detected in the two areas.\
+occfile<- "occ_data_karoo_fullfile.csv" #"Pool6.Data.csv" #the pooled data!!!\
+\
+#Load the observation data\
+data <- read.table(occfile, header=TRUE,sep=";",na.strings=TRUE)\
+names(data)\
+head(data)\
+\
+melt.tmp=melt(data,id.var=c("Species", "Station"), measure.var="Count")\
+Y=cast(melt.tmp, Station ~ Species,sum)\
+cat("\\n Y contains the number of times a species was seen at a camera station.")\
+cat("\\n camera station number down the rows; species name along the column.")\
+Y<-Y[,-1]\
+dim(Y) #322 by 43\
+\
+site.pics<-apply(Y, 1, function(x) sum(x>0))#identify where photos were taken\
+which(site.pics==0) #no pictures were taken at these sites!\
+\
+Koup.South.Stations<-sort(unique(data[data$Survey=="Koup South",][,2]))  \
+Koup.North.Stations<-sort(unique(data[data$Survey=="Koup North",][,2]))\
+Koup.Stations<-c(Koup.South.Stations, Koup.North.Stations)\
+Koup.Stations\
+\
+Anysberg.East.Stations<-sort(unique(data[data$Survey=="Anysberg East",][,2])) \
+Anysberg.West.Stations<-sort(unique(data[data$Survey=="Anysberg West",][,2])) \
+Anysberg.Stations<-c(Anysberg.East.Stations, Anysberg.West.Stations)\
+Anysberg.Stations\
+\
+apply(Y[Koup.Stations,], 1, function(x) sum(x>0)) #the number of species observed at a station\
+sum(apply(Y[Koup.Stations,], 2, function(x) sum(max(x)>0)) ) #35 species seen in the Koup\
+colnames(Y)[which( apply(Y[Koup.Stations,], 2, function(x) sum(max(x)>0)) ==1)] #which were seen at Koup\
+\
+sum(apply(Y[Anysberg.Stations,], 2, function(x) sum(max(x)>0)) ) #36 species seen in the Anysberg\
+colnames(Y)[which( apply(Y[Anysberg.Stations,], 2, function(x) sum(max(x)>0)) ==1)] #which were seen at Anysberg\
+#=============================================================================\
+\
+\
+Import the file \'93occ_data_karoo_fullfile_adjusted2.csv\'94.  It is the same as "occ_data_karoo_fullfile.csv" except that I changed the \'93survey\'94 names to \'93Anysberg\'94 and \'93Koup\'94.\
+\
+\
+The number of species  = 43\
+and they are as follows:\
+\
+> unique(Data$Species)\
+ [1] Canis mesomelas               Vulpes chama                  Otocyon megalotis             Caracal caracal              \
+ [5] Felis sylvestris              Panthera pardus               Galerella pulverulenta        Cynictis penicillata         \
+ [9] Atilax paludinosus            Suricata suricatta            Proteles cristata             Hyaena brunnea               \
+[13] Mellivora capensis            Ictonyx striatus              Aonyx capensis                Genetta genetta              \
+[17] Chlorocebus pygerythrus       Papio ursinus                 Lepus spp.                    Pronolagus rupestris         \
+[21] Hystrix africaeaustralis      Orycteropus afer              Equus zebra                   Sylvicapra grimmia           \
+[25] Raphicerus campestris         Damaliscus pygargus phillipsi Oreotragus oreotragus         Oryx gazella                 \
+[29] Tragelaphus strepsiceros      Antidorcas marsupialis        Pelea capreolus               Taurotragus oryx             \
+[33] Alcelaphus buselaphus caama   Dama dama                     Procavia capensis             Ardeotis kori                \
+[37] Neotis ludwigii               Eupodotis vigorsii            Eupodotis afra                Pternistes capensis          \
+[41] Scleroptila africanus         Potamochoerus larvatus        rodent  \
+\
+\
+Now I pooled the data and stored the data file as \'93Pool6.Data.csv\'94.\
+\
+So the Data file that contains the observation data = occfile<-"Pool6.Data.csv" #the pooled data!!!\
+The file is \'93,\'94 separated!\
+\
+NOTE THAT WHEN I DID THE POOLING, I GROUPED THE TIME THAT A CAMERA WAS OPERATIONAL INTO GROUPS OF 6 DAYS. 
+\f1\b IF THERE WAS A SHORT REMAINING SECTION AT THE END , THAT DATA WAS NOT USED!!!\
+
+\f0\b0 #=============================================================================\
+\
+\
+#Below I include some of the code to form the data that is eventually used. This code is included in all of the R programs that undertakes the analysis.\
+\
+\
+require(gmailr)\
+options(max.print=1000000000)\
+\
+#This piece of code is used to delete some of the species\
+setwd("~/Documents/AllanClark/Stats/Research/Drouilly_M/Analysis/Dorazio_occupancy_Models") #laptop\
+#setwd("~/Research/Drouilly_M/Dorazio_occupancy_Models") #office pc\
+\
+#Load the libraries\
+#library(R2jags)\
+library(reshape)\
+\
+#define the data files\
+#occfile<-"occ_data_karoo.csv"\
+occfile<-"Pool6.Data.csv"\
+stationfile<-"station_data_karoo_final.csv"\
+\
+#Load the observation data\
+data <- read.table(occfile, header=TRUE,sep=",",na.strings=TRUE)\
+names(data)\
+\
+#remove some of the stations!\
+#these stations dont have any pictures!\
+remove.stations<-c("8","10","15" , "44" , "47" , "48" , "56" , "57" , "119", "127")\
+for (i in 1:length(remove.stations))\
+\{\
+    data <- subset(data, Station != remove.stations[i] )\
+\}\
+\
+remove.species<-c("rodent" )\
+for (i in 1:length(remove.species))\
+\{\
+    data <- subset(data, Species != remove.species[i] )\
+\}\
+\
+length(unique(data$Station)) #322\
+length(unique(data$Species)) #42\
+\
+\
+#so there are 42 species in total since I excluded \'91rodent\'92. Also I deleted some stations since there were no pictures at some of the sites!\
+#=============================================================================\
+\
+\
+out of the 42 remaining species the following are NOT seen at 
+\f1\b Koup
+\f0\b0 :\
+[1] "Aonyx capensis"         "Atilax paludinosus"     "Equus zebra"            "Hyaena brunnea"        \
+[5] "Mellivora capensis"     "Panthera pardus"        "Potamochoerus larvatus" "Taurotragus oryx"   \
+\
+So now there 34 species left:\
+Koup.names\
+\
+ [1] "Alcelaphus buselaphus caama"   "Antidorcas marsupialis"        "
+\f1\b Ardeotis kori
+\f0\b0 "                \
+ [4] "Canis mesomelas"               "Caracal caracal"               "Chlorocebus pygerythrus"      \
+ [7] "Cynictis penicillata"          "Dama dama"                     "Damaliscus pygargus phillipsi"\
+[10] "
+\f1\b Eupodotis afra
+\f0\b0 "                "
+\f1\b Eupodotis vigorsii
+\f0\b0 "            "Felis sylvestris"             \
+[13] "Galerella pulverulenta"        "Genetta genetta"               "Hystrix africaeaustralis"     \
+[16] "Ictonyx striatus"              "Lepus spp."                    "
+\f1\b Neotis ludwigii
+\f0\b0 "              \
+[19] "Oreotragus oreotragus"         "Orycteropus afer"              "Oryx gazella"                 \
+[22] "Otocyon megalotis"             "Papio ursinus"                 "Pelea capreolus"              \
+[25] "Procavia capensis"             "Pronolagus rupestris"          "Proteles cristata"            \
+[28] "
+\f1\b Pternistes capensis
+\f0\b0 "           "Raphicerus campestris"         "
+\f1\b Scleroptila africanus
+\f0\b0 "        \
+[31] "Suricata suricatta"            "Sylvicapra grimmia"            "Tragelaphus strepsiceros"     \
+[34] "Vulpes chama"            \
+\
+\
+out of the 42 remaining species the following are NOT seen at 
+\f1\b Anysberg
+\f0\b0 :\
+\
+[1] "Ardeotis kori"                 "Cynictis penicillata"          "Dama dama"                    \
+[4] "Damaliscus pygargus phillipsi" "Neotis ludwigii"               "Suricata suricatta"           \
+[7] "Vulpes chama"\
+\
+So now there are 35 species left: \
+z\
+[1] "Alcelaphus buselaphus caama" "Antidorcas marsupialis"      "Aonyx capensis"             \
+ [4] "Atilax paludinosus"          "Canis mesomelas"             "Caracal caracal"            \
+ [7] "Chlorocebus pygerythrus"     "Equus zebra"                 "
+\f1\b Eupodotis afra
+\f0\b0 "             \
+[10] "
+\f1\b Eupodotis vigorsii
+\f0\b0 "          "Felis sylvestris"            "Galerella pulverulenta"     \
+[13] "Genetta genetta"             "Hyaena brunnea"              "Hystrix africaeaustralis"   \
+[16] "Ictonyx striatus"            "Lepus spp."                  "Mellivora capensis"         \
+[19] "Oreotragus oreotragus"       "Orycteropus afer"            "Oryx gazella"               \
+[22] "Otocyon megalotis"           "Panthera pardus"             "Papio ursinus"              \
+[25] "Pelea capreolus"             "Potamochoerus larvatus"      "Procavia capensis"          \
+[28] "Pronolagus rupestris"        "Proteles cristata"           "
+\f1\b Pternistes capensis
+\f0\b0 "        \
+[31] "Raphicerus campestris"       "
+\f1\b Scleroptila africanus
+\f0\b0 "       "Sylvicapra grimmia"         \
+[34] "Taurotragus oryx"            "Tragelaphus strepsiceros"\
+\
+\
+#observed at Koup = 34\
+#observed at Anysberg = 35\
+\
+#=============================================================================\
+\
+\
+\
+\
+\
+\
+}
