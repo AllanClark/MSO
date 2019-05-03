@@ -5,23 +5,27 @@ rnormdouble <- function(b, c) {
     .Call(`_MSO_rnormdouble`, b, c)
 }
 
-MSOBinlogitcpp <- function(X, V, Y, a2, b2, A2, B2) {
-    .Call(`_MSO_MSOBinlogitcpp`, X, V, Y, a2, b2, A2, B2)
+chooseC <- function(n, k) {
+    .Call(`_MSO_chooseC`, n, k)
 }
 
-rcpparma_hello_world <- function() {
-    .Call(`_MSO_rcpparma_hello_world`)
+binom_mass <- function(y, psi, p, K) {
+    .Call(`_MSO_binom_mass`, y, psi, p, K)
 }
 
-rcpparma_outerproduct <- function(x) {
-    .Call(`_MSO_rcpparma_outerproduct`, x)
+lbinom_mass <- function(y, psi, p, K) {
+    .Call(`_MSO_lbinom_mass`, y, psi, p, K)
 }
 
-rcpparma_innerproduct <- function(x) {
-    .Call(`_MSO_rcpparma_innerproduct`, x)
+lbinom_mass_p2 <- function(y, psi, p, K) {
+    .Call(`_MSO_lbinom_mass_p2`, y, psi, p, K)
 }
 
-rcpparma_bothproducts <- function(x) {
-    .Call(`_MSO_rcpparma_bothproducts`, x)
+MSOBinlogitcpp <- function(X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in) {
+    .Call(`_MSO_MSOBinlogitcpp`, X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in)
+}
+
+MSOBinocclogitcpp <- function(X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in) {
+    .Call(`_MSO_MSOBinocclogitcpp`, X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in)
 }
 

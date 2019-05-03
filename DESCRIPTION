@@ -9,7 +9,7 @@ Description: The following package allows the user to build various Bayesian mul
   species occupancy models. 
 License: What license is it under?
 Imports: 
-  Rcpp (>= 0.12.18)
+  Rcpp 
 LinkingTo: 
   Rcpp, 
   RcppArmadillo
