@@ -283,7 +283,8 @@ List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z,
                     arma::mat p, arma::mat psi,
                     arma::mat nsitevisits,
                     double a2, double b2, double A2, double B2,
-                    int ndraws, double percent_burn_in)
+                    int ndraws, double percent_burn_in, int thin,
+                    int selection)
 {  
   /* Undertakes sampling from a MSO model with known species richness!
    * Some model selection statistics are computed as well if required.
@@ -408,7 +409,11 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
   //The outputs
   int isamples_counter;
   int num_burnin = floor(ndraws*percent_burn_in);
-  int num_samples_kept = ndraws - num_burnin;
+  //int num_samples_kept = ndraws - num_burnin;
+  int num_samples_kept = floor( (ndraws - num_burnin)/thin );
+//Rcout << "\n num_burnin"   << num_burnin << std::endl;
+//Rcout << "\n num_samples_kept"   << num_samples_kept << std::endl;
+//Rcout << "\n last"   << num_burnin + thin*num_samples_kept << std::endl;
   
   arma::mat post_tau_alpha(1 , num_samples_kept);
   arma::mat post_tau_beta(1, num_samples_kept);
@@ -458,10 +463,13 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
 
   //-----------------------------------------------------------------------
   
-  //sampling
+  int thin_index = 0;
+  int isamples_counter_i = 0;
   
+  //sampling
   //now do the sampling here
-  for (int isamples=0; isamples<ndraws; isamples++){
+  //for (int isamples=0; isamples<ndraws; isamples++){  
+  for (int isamples=0; isamples<(num_burnin + thin*num_samples_kept); isamples++){
     
     //add in an interuptor. i.e. escape if the user cancels operations
     //checks every 1000 iterations
@@ -601,24 +609,23 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
     
     //store the samples
     
-    if (isamples_counter>=0){
-      post_mu_alpha.col(isamples_counter) = mu_alpha;
-      post_mu_beta.col(isamples_counter) = mu_beta;
+    if ( (isamples_counter>=0) && (isamples_counter==thin_index) ){
+      post_mu_alpha.col(isamples_counter_i) = mu_alpha;
+      post_mu_beta.col(isamples_counter_i) = mu_beta;
       
-      post_tau_alpha.col(isamples_counter) = tau_alpha;
-      post_tau_beta.col(isamples_counter) = tau_beta;
-      //post_z.col(isamples_counter) = z;
-      //post_psi.col(isamples_counter) = psi;
+      post_tau_alpha.col(isamples_counter_i) = tau_alpha;
+      post_tau_beta.col(isamples_counter_i) = tau_beta;
       
-      alpha_array.slice(isamples_counter) = alpha;
-      beta_array.slice(isamples_counter) = beta;
-      z_array.slice(isamples_counter) = z;
+      alpha_array.slice(isamples_counter_i) = alpha;
+      beta_array.slice(isamples_counter_i) = beta;
+      z_array.slice(isamples_counter_i) = z;
       
       //store p and the conditional psi matrices for each iteration kept
-      p_array.slice(isamples_counter) = p;
-      psi_array.slice(isamples_counter) = psi_conditional;
+      p_array.slice(isamples_counter_i) = p;
+      psi_array.slice(isamples_counter_i) = psi_conditional;
       
-      //calculation of model selection statistics
+      //-------------------start of model selection calculations----------------
+      
       for (int i_species=0; i_species<ns; i_species++){
         for (int i_sites=0; i_sites<J; i_sites++){
           
@@ -655,33 +662,57 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
       }//end i_species
       
       //calculation of the deviance and simulated deviance
-      deviance_s(isamples_counter) = -2*accu(Ds_mat);
-      deviance_s_tilde(isamples_counter) = -2*accu(Ds_tilde_mat);
+      deviance_s(isamples_counter_i) = -2*accu(Ds_mat);
+      deviance_s_tilde(isamples_counter_i) = -2*accu(Ds_tilde_mat);
   
       //calculation of the CPO
-      CPO = -log(isamples_counter+1)*J*ns - accu( log(CPO_ij) );
+      CPO = -log(isamples_counter_i+1)*J*ns - accu( log(CPO_ij) );
+      
+      thin_index += thin;
+      isamples_counter_i += 1; 
     }//end of if statement
   }//end sampling
   
   //deviance_s = -2*accu(var_pmf_binom2);
-  elppd = accu( log(sum_pmf_binom) ) -log(isamples_counter+1)*J*ns; //correct
-  var_pmf_binom2 = pow(var_pmf_binom2,2)/(isamples_counter+1);  //correct
-  pdWAIC = accu( (var_pmf_binom1 - var_pmf_binom2)/isamples_counter );  //correct
+  elppd = accu( log(sum_pmf_binom) ) -log(isamples_counter_i+1)*J*ns; //correct
+  var_pmf_binom2 = pow(var_pmf_binom2,2)/(isamples_counter_i+1);  //correct
+  pdWAIC = accu( (var_pmf_binom1 - var_pmf_binom2)/isamples_counter_i );  //correct
   WAIC = -2*(elppd - pdWAIC);
   
-  return List::create(_["mu_alpha"]=post_mu_alpha,
-                      _["mu_beta"]=post_mu_beta,
-                      _["tau_alpha"]=post_tau_alpha,
-                      _["tau_beta"]=post_tau_beta,
-                      _["alpha"]=alpha_array,
-                      _["beta"]=beta_array,
-                      _["z"]=z_array,
-                      _["psi_array"]=psi_array,
-                      _["p_array"]=p_array,
-                      _["deviance"]=deviance_s,
-                      _["deviance_tilde"]=deviance_s_tilde,
-                      _["WAIC"]=WAIC,
-                      _["CPO"]=CPO);
+  //Calculate the Bayesian p-value
+  int tmp=0;
+  for (int ideviance=0; ideviance<deviance_s.n_cols; ideviance++){
+    if (deviance_s(ideviance)>deviance_s_tilde(ideviance)){ 
+      tmp += 1;
+    }else{
+      tmp += 0;
+    }
+  }//endif
+  //-------------------end of model selection calculations----------------------
+  
+  if (selection==1){
+    //only return the model selection stats
+    
+    return List::create(_["BPValue"]=tmp*1.0/deviance_s.n_cols,
+                        _["WAIC"]=WAIC,
+                        _["CPO"]=CPO);
+  }else {
+    //return everything
+    return List::create(_["mu_alpha"]=post_mu_alpha,
+                        _["mu_beta"]=post_mu_beta,
+                        _["tau_alpha"]=post_tau_alpha,
+                        _["tau_beta"]=post_tau_beta,
+                        _["alpha"]=alpha_array,
+                        _["beta"]=beta_array,
+                        _["z"]=z_array,
+                        _["psi_array"]=psi_array,
+                        _["p_array"]=p_array,
+                        _["deviance"]=deviance_s,
+                        _["deviance_tilde"]=deviance_s_tilde,
+                        _["BPValue"]=tmp*1.0/deviance_s.n_cols,
+                        _["WAIC"]=WAIC,
+                        _["CPO"]=CPO);
+  }
 }
 
 // [[Rcpp::depends("RcppArmadillo")]]
@@ -692,7 +723,7 @@ List MSOBinocclogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z,
                        arma::mat tau_i, double a_tau, double b_tau,
                        arma::mat nsitevisits,
                        double a2, double b2, double A2, double B2,
-                       int ndraws, double percent_burn_in)
+                       int ndraws, double percent_burn_in, int thin)
 {  
   //Undertakes sampling from a MSO model with known species richness!
   //This model attempts to account for spatial autocorrelation in the 
@@ -813,8 +844,9 @@ List MSOBinocclogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z,
   //The outputs
   int isamples_counter;
   int num_burnin = floor(ndraws*percent_burn_in);
-  int num_samples_kept = ndraws - num_burnin;
-  
+  int num_samples_kept = floor( (ndraws - num_burnin)/thin );
+//Rcout << "\n num_samples_kept"   << num_samples_kept << std::endl;
+
   arma::mat post_tau_alpha(1 , num_samples_kept);
   arma::mat post_tau_beta(1, num_samples_kept);
   arma::mat post_tau_i(ns, num_samples_kept);
@@ -835,6 +867,9 @@ List MSOBinocclogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z,
   cube p_array(z.n_rows, z.n_cols , num_samples_kept);
   cube psi_array(z.n_rows, z.n_cols , num_samples_kept);
   //-----------------------------------------------------------------------
+  
+  int thin_index = 0;
+  int sample_index = 0;
   
   //sampling
   //now do the sampling here

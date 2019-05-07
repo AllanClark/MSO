@@ -73,8 +73,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // MSOBinlogitcpp
-List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z, arma::mat p, arma::mat psi, arma::mat nsitevisits, double a2, double b2, double A2, double B2, int ndraws, double percent_burn_in);
-RcppExport SEXP _MSO_MSOBinlogitcpp(SEXP XSEXP, SEXP VSEXP, SEXP YSEXP, SEXP zSEXP, SEXP pSEXP, SEXP psiSEXP, SEXP nsitevisitsSEXP, SEXP a2SEXP, SEXP b2SEXP, SEXP A2SEXP, SEXP B2SEXP, SEXP ndrawsSEXP, SEXP percent_burn_inSEXP) {
+List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z, arma::mat p, arma::mat psi, arma::mat nsitevisits, double a2, double b2, double A2, double B2, int ndraws, double percent_burn_in, int thin, int selection);
+RcppExport SEXP _MSO_MSOBinlogitcpp(SEXP XSEXP, SEXP VSEXP, SEXP YSEXP, SEXP zSEXP, SEXP pSEXP, SEXP psiSEXP, SEXP nsitevisitsSEXP, SEXP a2SEXP, SEXP b2SEXP, SEXP A2SEXP, SEXP B2SEXP, SEXP ndrawsSEXP, SEXP percent_burn_inSEXP, SEXP thinSEXP, SEXP selectionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,13 +91,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type B2(B2SEXP);
     Rcpp::traits::input_parameter< int >::type ndraws(ndrawsSEXP);
     Rcpp::traits::input_parameter< double >::type percent_burn_in(percent_burn_inSEXP);
-    rcpp_result_gen = Rcpp::wrap(MSOBinlogitcpp(X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in));
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int >::type selection(selectionSEXP);
+    rcpp_result_gen = Rcpp::wrap(MSOBinlogitcpp(X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in, thin, selection));
     return rcpp_result_gen;
 END_RCPP
 }
 // MSOBinocclogitcpp
-List MSOBinocclogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z, arma::mat K, arma::mat Minv, arma::mat p, arma::mat psi, arma::mat tau_i, double a_tau, double b_tau, arma::mat nsitevisits, double a2, double b2, double A2, double B2, int ndraws, double percent_burn_in);
-RcppExport SEXP _MSO_MSOBinocclogitcpp(SEXP XSEXP, SEXP VSEXP, SEXP YSEXP, SEXP zSEXP, SEXP KSEXP, SEXP MinvSEXP, SEXP pSEXP, SEXP psiSEXP, SEXP tau_iSEXP, SEXP a_tauSEXP, SEXP b_tauSEXP, SEXP nsitevisitsSEXP, SEXP a2SEXP, SEXP b2SEXP, SEXP A2SEXP, SEXP B2SEXP, SEXP ndrawsSEXP, SEXP percent_burn_inSEXP) {
+List MSOBinocclogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z, arma::mat K, arma::mat Minv, arma::mat p, arma::mat psi, arma::mat tau_i, double a_tau, double b_tau, arma::mat nsitevisits, double a2, double b2, double A2, double B2, int ndraws, double percent_burn_in, int thin);
+RcppExport SEXP _MSO_MSOBinocclogitcpp(SEXP XSEXP, SEXP VSEXP, SEXP YSEXP, SEXP zSEXP, SEXP KSEXP, SEXP MinvSEXP, SEXP pSEXP, SEXP psiSEXP, SEXP tau_iSEXP, SEXP a_tauSEXP, SEXP b_tauSEXP, SEXP nsitevisitsSEXP, SEXP a2SEXP, SEXP b2SEXP, SEXP A2SEXP, SEXP B2SEXP, SEXP ndrawsSEXP, SEXP percent_burn_inSEXP, SEXP thinSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -119,7 +121,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type B2(B2SEXP);
     Rcpp::traits::input_parameter< int >::type ndraws(ndrawsSEXP);
     Rcpp::traits::input_parameter< double >::type percent_burn_in(percent_burn_inSEXP);
-    rcpp_result_gen = Rcpp::wrap(MSOBinocclogitcpp(X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in));
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    rcpp_result_gen = Rcpp::wrap(MSOBinocclogitcpp(X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in, thin));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -130,8 +133,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_MSO_binom_mass", (DL_FUNC) &_MSO_binom_mass, 4},
     {"_MSO_lbinom_mass", (DL_FUNC) &_MSO_lbinom_mass, 4},
     {"_MSO_lbinom_mass_p2", (DL_FUNC) &_MSO_lbinom_mass_p2, 4},
-    {"_MSO_MSOBinlogitcpp", (DL_FUNC) &_MSO_MSOBinlogitcpp, 13},
-    {"_MSO_MSOBinocclogitcpp", (DL_FUNC) &_MSO_MSOBinocclogitcpp, 18},
+    {"_MSO_MSOBinlogitcpp", (DL_FUNC) &_MSO_MSOBinlogitcpp, 15},
+    {"_MSO_MSOBinocclogitcpp", (DL_FUNC) &_MSO_MSOBinocclogitcpp, 19},
     {NULL, NULL, 0}
 };
 

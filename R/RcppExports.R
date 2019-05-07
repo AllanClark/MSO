@@ -21,11 +21,11 @@ lbinom_mass_p2 <- function(y, psi, p, K) {
     .Call(`_MSO_lbinom_mass_p2`, y, psi, p, K)
 }
 
-MSOBinlogitcpp <- function(X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in) {
-    .Call(`_MSO_MSOBinlogitcpp`, X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in)
+MSOBinlogitcpp <- function(X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in, thin, selection) {
+    .Call(`_MSO_MSOBinlogitcpp`, X, V, Y, z, p, psi, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in, thin, selection)
 }
 
-MSOBinocclogitcpp <- function(X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in) {
-    .Call(`_MSO_MSOBinocclogitcpp`, X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in)
+MSOBinocclogitcpp <- function(X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in, thin) {
+    .Call(`_MSO_MSOBinocclogitcpp`, X, V, Y, z, K, Minv, p, psi, tau_i, a_tau, b_tau, nsitevisits, a2, b2, A2, B2, ndraws, percent_burn_in, thin)
 }
 
