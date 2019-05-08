@@ -412,7 +412,9 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
   //int num_samples_kept = ndraws - num_burnin;
   int num_samples_kept = floor( (ndraws - num_burnin)/thin );
 //Rcout << "\n num_burnin"   << num_burnin << std::endl;
-//Rcout << "\n num_samples_kept"   << num_samples_kept << std::endl;
+//Rcout << "\n num_samples_kept "   << num_samples_kept << std::endl;
+//Rcout << "\n ns "   << ns << std::endl;
+//Rcout << "\n J "   << J << std::endl;
 //Rcout << "\n last"   << num_burnin + thin*num_samples_kept << std::endl;
   
   arma::mat post_tau_alpha(1 , num_samples_kept);
@@ -666,7 +668,7 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
       deviance_s_tilde(isamples_counter_i) = -2*accu(Ds_tilde_mat);
   
       //calculation of the CPO
-      CPO = -log(isamples_counter_i+1)*J*ns - accu( log(CPO_ij) );
+      CPO = -log(isamples_counter_i+1)*J*ns + accu( log(CPO_ij) );
       
       thin_index += thin;
       isamples_counter_i += 1; 
