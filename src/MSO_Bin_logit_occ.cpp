@@ -296,6 +296,8 @@ List MSOBinlogitcpp(arma::mat X, arma::mat V, arma::mat Y, arma::mat z,
   int J = Y.n_cols; //number of sites
   int nd = V.n_cols; //number of columns in detection covariates
   int no = X.n_cols; //number of columns in occupancy covariates
+  arma::mat p_fixed = p; 
+  arma::mat psi_fixed = psi;
   
   NumericVector siteindex(J); //siteindex = 1, 2, ..., J
   for (int idown =0; idown<J; idown++){siteindex(idown) = idown+1;}
@@ -434,14 +436,11 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
   
   //the detection probs matrix that is being kept
   cube p_array(J, ns , num_samples_kept);
-  //arma::mat p_store = zeros<arma::mat>(J, ns);
-  //Rcout << "p =" << p_store << std::endl;
   
   //the occupancy prob matrix that is being kept
   cube psi_array(J, ns , num_samples_kept);
-  //arma::mat psi_store = zeros<arma::mat>(J, ns);
-  //Rcout << "psi_store = " << psi_store << std::endl;
   arma::mat psi_conditional = psi;
+  arma::mat psi_conditional_fixed = psi;
   //-----------------------------------------------------------------------
   
   // model selection variables
@@ -452,14 +451,19 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
   double binom_mass_temp;
   
   arma::mat deviance_s(1 , num_samples_kept);
+  arma::mat deviance_s_samp = deviance_s;
   arma::mat deviance_s_tilde(1 , num_samples_kept);
+  arma::mat deviance_s_tilde_samp = deviance_s_tilde;
   arma::mat sum_pmf_binom = zeros<arma::mat>(ns, J);
   arma::mat var_pmf_binom1 = sum_pmf_binom; //zeros<arma::mat>(ns, J);
   arma::mat var_pmf_binom2 = sum_pmf_binom; //zeros<arma::mat>(ns, J);
   arma::mat ytilde = Y; //simulated Y for goodness of fit
+  arma::mat ytilde_samp = Y; //simulated Y for goodness of fit based on one sampled posterior draw
   arma::mat ztilde = z; //simulated z for goodness of fit
-  arma::mat Ds_mat = sum_pmf_binom; //zeros<arma::mat>(ns, J); 
+  arma::mat Ds_mat = sum_pmf_binom; //zeros<arma::mat>(ns, J);
+  arma::mat Ds_mat_samp = Ds_mat; 
   arma::mat Ds_tilde_mat = sum_pmf_binom; //zeros<arma::mat>(ns, J);
+  arma::mat Ds_tilde_mat_samp = Ds_tilde_mat; 
   arma::mat CPO_ij =  sum_pmf_binom; //zeros<arma::mat>(ns, J);
   NumericVector ydraw(1);
 
@@ -578,7 +582,13 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
       p.col(i_species) = 1.0/(1.0 + exp( -V*alpha.col(i_species)) ); 
       psi.col(i_species) = 1.0/(1.0 + exp( -X*beta.col(i_species)) );
     }
-    //Rcout << "p =" << p << std::endl;
+    
+    //fix p and psi to the first sample after burnin
+    //used for the sampled posterior checks
+    if ( isamples_counter==0 ){
+      p_fixed = p;
+      psi_fixed = psi;
+    }
     
     //sample from z
     for (int i_species=0; i_species<ns; i_species++){
@@ -593,39 +603,60 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
           z(i_sites, i_species) = zdraw(0);
           
           //for goodness of fit
-          if (zdraw(0)==0){
-            ytilde(i_species, i_sites)=0;
-          }else{
-            ydraw = rbinom(1, nsitevisits(i_sites), p(i_sites, i_species));
-            ytilde(i_species, i_sites) = ydraw(0);
-          }//end goodness of fit
-          
+          if ( (isamples_counter>=0) && (isamples_counter==thin_index) ){
+            if (zdraw(0)==0){
+              //for traditional predictive prob check
+              ytilde(i_species, i_sites)=0;
+            }else{
+              //for traditional predictive prob check
+              ydraw = rbinom(1, nsitevisits(i_sites), p(i_sites, i_species));
+              ytilde(i_species, i_sites) = ydraw(0);
+            }//end goodness of fit
+            
+            //for sampled predictive prob check
+            prob = 1.0/( 1.0 + (1.0 - psi_fixed(i_sites, i_species) )/( psi_fixed(i_sites, i_species)*pow(1-p_fixed(i_sites, i_species), nsitevisits(i_sites) )) );
+            psi_conditional_fixed(i_sites, i_species) = prob(0); //store the conditional prob for goodness of fit work.
+            zdraw = rbinom(1,1, prob(0));
+            
+            if (zdraw(0)==0){
+              ytilde_samp(i_species, i_sites)=0;
+            }else{
+              ydraw = rbinom(1, nsitevisits(i_sites), p_fixed(i_sites, i_species));
+              ytilde_samp(i_species, i_sites) = ydraw(0);
+            }//end goodness of fit
+          }//end of goodness of fit
           
         }else{
-          ydraw = rbinom(1, nsitevisits(i_sites), p(i_sites, i_species));
-          ytilde(i_species, i_sites) = ydraw(0);
-          //Rcout << "ytilde=" << ytilde(i_species, i_sites) << std::endl;
+          //for goodness of fit
+          if ( (isamples_counter>=0) && (isamples_counter==thin_index) ){
+            ydraw = rbinom(1, nsitevisits(i_sites), p(i_sites, i_species));
+            ytilde(i_species, i_sites) = ydraw(0);
+            
+            ydraw = rbinom(1, nsitevisits(i_sites), p_fixed(i_sites, i_species));
+            ytilde_samp(i_species, i_sites) = ydraw(0);
+          }//end of goodness of fit
         }//endif
       }//endif
     }//end sampling of z
     
     //store the samples
-    
     if ( (isamples_counter>=0) && (isamples_counter==thin_index) ){
-      post_mu_alpha.col(isamples_counter_i) = mu_alpha;
-      post_mu_beta.col(isamples_counter_i) = mu_beta;
-      
-      post_tau_alpha.col(isamples_counter_i) = tau_alpha;
-      post_tau_beta.col(isamples_counter_i) = tau_beta;
-      
-      alpha_array.slice(isamples_counter_i) = alpha;
-      beta_array.slice(isamples_counter_i) = beta;
-      z_array.slice(isamples_counter_i) = z;
-      
-      //store p and the conditional psi matrices for each iteration kept
-      p_array.slice(isamples_counter_i) = p;
-      psi_array.slice(isamples_counter_i) = psi_conditional;
-      
+      //don't store the sample parameter values
+      if (selection != 1){
+        post_mu_alpha.col(isamples_counter_i) = mu_alpha;
+        post_mu_beta.col(isamples_counter_i) = mu_beta;
+        
+        post_tau_alpha.col(isamples_counter_i) = tau_alpha;
+        post_tau_beta.col(isamples_counter_i) = tau_beta;
+        
+        alpha_array.slice(isamples_counter_i) = alpha;
+        beta_array.slice(isamples_counter_i) = beta;
+        z_array.slice(isamples_counter_i) = z;
+        
+        //store p and the conditional psi matrices for each iteration kept
+        p_array.slice(isamples_counter_i) = p;
+        psi_array.slice(isamples_counter_i) = psi_conditional;
+      }
       //-------------------start of model selection calculations----------------
       
       for (int i_species=0; i_species<ns; i_species++){
@@ -637,10 +668,19 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
                        psi_conditional(i_sites,i_species),  p(i_sites,i_species), 
                        nsitevisits(i_sites));
           
+          Ds_tilde_mat_samp(i_species, i_sites) = lbinom_mass(ytilde_samp(i_species, i_sites), 
+                       psi_conditional_fixed(i_sites,i_species),  p_fixed(i_sites,i_species), 
+                       nsitevisits(i_sites));
+          
           //the observed deviation
           Ds_mat(i_species, i_sites) = lbinom_mass(Y(i_species, i_sites), 
                  psi_conditional(i_sites,i_species),  p(i_sites,i_species), 
                  nsitevisits(i_sites));
+          
+          Ds_mat_samp(i_species, i_sites) = lbinom_mass(Y(i_species, i_sites), 
+                 psi_conditional_fixed(i_sites,i_species),  p_fixed(i_sites,i_species), 
+                 nsitevisits(i_sites));
+          
           
           var_pmf_binom2(i_species, i_sites) += Ds_mat(i_species, i_sites);
           
@@ -664,8 +704,14 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
       }//end i_species
       
       //calculation of the deviance and simulated deviance
+      //based on the posterior predictive checks
       deviance_s(isamples_counter_i) = -2*accu(Ds_mat);
       deviance_s_tilde(isamples_counter_i) = -2*accu(Ds_tilde_mat);
+  
+      //calculation of the deviance and simulated deviance
+      //based on sampled posterior predictive checks
+      deviance_s_samp(isamples_counter_i) = -2*accu(Ds_mat_samp);
+      deviance_s_tilde_samp(isamples_counter_i) = -2*accu(Ds_tilde_mat_samp);
   
       //calculation of the CPO
       CPO = -log(isamples_counter_i+1)*J*ns + accu( log(CPO_ij) );
@@ -681,21 +727,32 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
   pdWAIC = accu( (var_pmf_binom1 - var_pmf_binom2)/isamples_counter_i );  //correct
   WAIC = -2*(elppd - pdWAIC);
   
-  //Calculate the Bayesian p-value
-  int tmp=0;
+  //Calculate the Bayesian p-values
+  int tmp1=0;
   for (int ideviance=0; ideviance<deviance_s.n_cols; ideviance++){
     if (deviance_s(ideviance)>deviance_s_tilde(ideviance)){ 
-      tmp += 1;
+      tmp1 += 1;
     }else{
-      tmp += 0;
+      tmp1 += 0;
     }
   }//endif
+  
+  int tmp2=0;
+  for (int ideviance=0; ideviance<deviance_s_samp.n_cols; ideviance++){
+    if (deviance_s_samp(ideviance)>deviance_s_tilde_samp(ideviance)){ 
+      tmp2 += 1;
+    }else{
+      tmp2 += 0;
+    }
+  }//endif
+  
   //-------------------end of model selection calculations----------------------
   
   if (selection==1){
     //only return the model selection stats
     
-    return List::create(_["BPValue"]=tmp*1.0/deviance_s.n_cols,
+    return List::create(_["BPValue"]=tmp1*1.0/deviance_s.n_cols,
+                        _["sBPValue"]=tmp2*1.0/deviance_s_samp.n_cols,
                         _["WAIC"]=WAIC,
                         _["CPO"]=CPO);
   }else {
@@ -711,7 +768,10 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
                         _["p_array"]=p_array,
                         _["deviance"]=deviance_s,
                         _["deviance_tilde"]=deviance_s_tilde,
-                        _["BPValue"]=tmp*1.0/deviance_s.n_cols,
+                        _["deviance_samp"]=deviance_s_samp,
+                        _["deviance_tilde_samp"]=deviance_s_tilde_samp,
+                        _["BPValue"]=tmp1*1.0/deviance_s.n_cols,
+                        _["sBPValue"]=tmp2*1.0/deviance_s_samp.n_cols,
                         _["WAIC"]=WAIC,
                         _["CPO"]=CPO);
   }
