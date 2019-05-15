@@ -722,9 +722,16 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
   }//end sampling
   
   //deviance_s = -2*accu(var_pmf_binom2);
-  elppd = accu( log(sum_pmf_binom) ) -log(isamples_counter_i+1)*J*ns; //correct
-  var_pmf_binom2 = pow(var_pmf_binom2,2)/(isamples_counter_i+1);  //correct
-  pdWAIC = accu( (var_pmf_binom1 - var_pmf_binom2)/isamples_counter_i );  //correct
+  
+  Rcout << "\n isamples_counter_i = " << isamples_counter_i << std::endl;
+  Rcout << "\n J*ns = " << J*ns << std::endl;
+  
+  elppd = accu( log(sum_pmf_binom) ) -log(isamples_counter_i)*J*ns; //correct
+  
+  var_pmf_binom2 = pow(var_pmf_binom2, 2)/(isamples_counter_i);  //correct
+  pdWAIC = accu( (var_pmf_binom1 - var_pmf_binom2)/(isamples_counter_i-1) );  //correct
+  //pdWAIC = var_pmf_binom2;//accu(var_pmf_binom2);
+    
   WAIC = -2*(elppd - pdWAIC);
   
   //Calculate the Bayesian p-values
@@ -754,7 +761,9 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
     return List::create(_["BPValue"]=tmp1*1.0/deviance_s.n_cols,
                         _["sBPValue"]=tmp2*1.0/deviance_s_samp.n_cols,
                         _["WAIC"]=WAIC,
-                        _["CPO"]=CPO);
+                        _["CPO"]=CPO,
+                        _["elppd"]=elppd,
+                        _["pdWAIC"]=pdWAIC);
   }else {
     //return everything
     return List::create(_["mu_alpha"]=post_mu_alpha,
@@ -773,7 +782,9 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
                         _["BPValue"]=tmp1*1.0/deviance_s.n_cols,
                         _["sBPValue"]=tmp2*1.0/deviance_s_samp.n_cols,
                         _["WAIC"]=WAIC,
-                        _["CPO"]=CPO);
+                        _["CPO"]=CPO,
+                        _["elppd"]=elppd,
+                        _["pdWAIC"]=pdWAIC);
   }
 }
 
