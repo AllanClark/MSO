@@ -721,17 +721,9 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
     }//end of if statement
   }//end sampling
   
-  //deviance_s = -2*accu(var_pmf_binom2);
-  
-  Rcout << "\n isamples_counter_i = " << isamples_counter_i << std::endl;
-  Rcout << "\n J*ns = " << J*ns << std::endl;
-  
   elppd = accu( log(sum_pmf_binom) ) -log(isamples_counter_i)*J*ns; //correct
-  
   var_pmf_binom2 = pow(var_pmf_binom2, 2)/(isamples_counter_i);  //correct
   pdWAIC = accu( (var_pmf_binom1 - var_pmf_binom2)/(isamples_counter_i-1) );  //correct
-  //pdWAIC = var_pmf_binom2;//accu(var_pmf_binom2);
-    
   WAIC = -2*(elppd - pdWAIC);
   
   //Calculate the Bayesian p-values
@@ -764,6 +756,17 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
                         _["CPO"]=CPO,
                         _["elppd"]=elppd,
                         _["pdWAIC"]=pdWAIC);
+  }else if (selection==2){
+    //posterior samples
+    return List::create(_["mu_alpha"]=post_mu_alpha,
+                        _["mu_beta"]=post_mu_beta,
+                        _["tau_alpha"]=post_tau_alpha,
+                        _["tau_beta"]=post_tau_beta,
+                        _["alpha"]=alpha_array,
+                        _["beta"]=beta_array,
+                        _["z"]=z_array,
+                        _["psi_array"]=psi_array,
+                        _["p_array"]=p_array);
   }else {
     //return everything
     return List::create(_["mu_alpha"]=post_mu_alpha,
