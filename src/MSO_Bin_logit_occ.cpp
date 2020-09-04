@@ -26,6 +26,7 @@ arma::mat mvrnormArma(int n, arma::vec mu, arma::mat sigma) {
      /* Sampling from a Gaussain (mutivariate) distribution
      * output is row vector
      */
+     int ncols2 = sigma.n_cols; //delete this later
      int ncols = sigma.n_cols;
      arma::mat Y = arma::randn(n, ncols);  //1 by ncols matrix
      return arma::repmat(mu, 1, n).t() + Y * arma::chol(sigma);
