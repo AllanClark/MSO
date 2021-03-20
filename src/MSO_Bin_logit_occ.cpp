@@ -317,8 +317,8 @@ Rcpp::Rcout << "\n inv_B2 = " << inv_B2 << std::endl;
 */
 
   //Some initial values and definitions
-  double inv_nabla_alpha = rgammadouble(1, 0.5, inv_A2);
-  double inv_nabla_beta = rgammadouble(1, 0.5, inv_B2);
+  double inv_nabla_alpha = rgammadouble(1, 1, inv_A2); //corrected
+  double inv_nabla_beta = rgammadouble(1, 1, inv_B2); //corrected
   
   double tau_alpha; //1/sigma2(alpha)
   double tau_beta;  //1/sigma2(beta)
